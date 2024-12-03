@@ -10,13 +10,13 @@ TEST PUBLISH-SUBSCRIBE MODEL
 
 RUN APPLICATION:
 1. start WSL in new terminal by using command wsl
-2. then use this command to start redis server: sudo service redis-server start
-3. Then run our run index.js located in the weather-alert-server folder
-4. Then view application by going to http://localhost:3000/
-5. next run weatherfetcher.java, and the application will send a alert evacuation message, click okay and you will be able to view the weather alert, and the opion to view emergency shelter locations
-6. By running weatherfetcher.java it will also tell you the current weather under weather updates
-7. You can use the temperature, wind speed, and humidity controls to set your custom alerts 
-8. Event log: View the event log by clicking the "show logged events button" on the application
+2. then use this command to start redis server you will also be prompted to enter sudo password: sudo service redis-server start
+4. Then run our run index.js located in the weather-alert-server folder
+5. Then view application by going to http://localhost:3000/
+6. next run weatherfetcher.java, and the application will send a alert evacuation message, click okay and you will be able to view the weather alert, and the opion to view emergency shelter locations
+7. By running weatherfetcher.java it will also tell you the current weather under weather updates
+8. You can use the temperature, wind speed, and humidity controls to set your custom alerts 
+9. Event log: View the event log by clicking the "show logged events button" on the application
 
 
   
