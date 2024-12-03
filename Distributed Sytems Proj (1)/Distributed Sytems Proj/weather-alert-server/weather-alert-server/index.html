@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Weather Alerts</title>
+    <style>
+        /* Reset some basic styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            display: flex;
+            justify-content: center;  /* Centers horizontally */
+            align-items: center;      /* Centers vertically */
+            min-height: 100vh;        /* Full height of the viewport */
+            color: #333;
+            padding: 20px;            /* Padding to prevent content from sticking to the edges */
+            overflow-y: auto;         /* Enable scrolling if content overflows */
+        }
+
+        /* Main container that will hold all content */
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            height: auto;
+        }
+
+        h1, h2, h3 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        /* Form section styling */
+        #preferences-form {
+            border: 2px solid #ccc;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+        }
+
+        #alert-form label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+
+        #alert-form input {
+            width: 100%;
+            padding: 10px;
+            margin-bottom: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+
+        #alert-form button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            width: 100%;
+        }
+
+        #alert-form button:hover {
+            background-color: #45a049;
+        }
+
+        /* Alerts section styling */
+        #alerts {
+            border: 2px solid #ffcc00;
+            border-radius: 8px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #fff7cc;
+        }
+
+        #alerts p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Updates section styling */
+        #updates {
+            border: 2px solid #009688;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #e0f2f1;
+        }
+
+        #updates p {
+            font-size: 16px;
+            margin-bottom: 10px;
+        }
+
+        /* Event log section styling */
+        #event-log {
+            border: 2px solid #3b5998;
+            border-radius: 8px;
+            padding: 15px;
+            background-color: #e9ebee;
+            margin-top: 20px;
+        }
+
+        #event-log p {
+            font-size: 14px;
+            margin-bottom: 5px;
+        }
+
+        /* Map container styling */
+        #map {
+            height: 400px;  /* Fixed height for the map */
+            width: 100%;
+            border: 2px solid #00796b;
+            border-radius: 8px;
+            margin-top: 20px;
+            display: none; /* Hide map initially */
+        }
+
+        /* Button for emergency shelters */
+        #evacuate-button {
+            background-color: #f44336;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            display: block;
+            margin-top: 20px;
+            width: 100%;
+        }
+
+        #evacuate-button:hover {
+            background-color: #e53935;
+        }
+
+        /* Centering content within the container */
+        .content-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+        }
+
+        /* Button to fetch event logs */
+        #fetch-logs {
+            background-color: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 16px;
+            margin-top: 20px;
+        }
+
+        #fetch-logs:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="content-wrapper">
+            <h1>Weather Alerts</h1>
+
+            <!-- Form to allow users to set custom thresholds -->
+            <div id="preferences-form">
+                <h2>Set Custom Alerts</h2>
+                <form id="alert-form">
+                    <label for="temperature">Temperature Threshold (°C):</label>
+                    <input type="number" id="temperature" name="temperature" required><br>
+
+                    <label for="wind_speed">Wind Speed Threshold (km/h):</label>
+                    <input type="number" id="wind_speed" name="wind_speed" required><br>
+
+                    <label for="humidity">Humidity Threshold (%):</label>
+                    <input type="number" id="humidity" name="humidity" required><br>
+
+                    <button type="submit">Save Preferences</button>
+                </form>
+            </div>
+
+            <!-- Alerts section -->
+            <div id="alerts">
+                <h3>Weather Alerts</h3>
+            </div>
+
+            <!-- Updates section -->
+            <div id="updates">
+                <h3>Weather Updates</h3>
+            </div>
+
+            <!-- Event log section -->
+            <div id="event-log">
+                <h3>Event Logs</h3>
+                <button id="fetch-logs">Show Logged Events</button>
+                <div id="logs-output"></div>
+            </div>
+
+            <!-- Map container for shelters -->
+            <div id="map"></div>
+        </div>
+    </div>
+
+    <!-- Include Socket.IO client library -->
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        const socket = io();
+
+        // Fetch event logs from the server
+        document.getElementById('fetch-logs').addEventListener('click', async () => {
+            const response = await fetch('/api/event-logs');
+            const data = await response.json();
+
+            const logsOutput = document.getElementById('logs-output');
+            logsOutput.innerHTML = ''; // Clear previous logs
+
+            if (data.logs) {
+                for (const [id, log] of Object.entries(data.logs)) {
+                    const logEntry = document.createElement('p');
+                    logEntry.textContent = `Event ID: ${id}, Data: ${log}`;
+                    logsOutput.appendChild(logEntry);
+                }
+            } else {
+                logsOutput.textContent = data.message || 'Failed to fetch logs.';
+            }
+        });
+
+        // Event listener for weather alerts
+        socket.on('weather_alerts', (message) => {
+            console.log("Weather alert received:", message);
+            displayWeatherAlert(message);
+        });
+
+        // Event listener for weather updates
+        socket.on('weather_updates', (message) => {
+            console.log("Weather update received:", message);
+            displayWeatherUpdate(message);
+        });
+
+        // Function to display weather alerts in the UI
+        function displayWeatherAlert(message) {
+            const alertsDiv = document.getElementById('alerts');
+            const alertMessage = document.createElement('p');
+            alertMessage.textContent = `Alert: ${message}`;
+            alertsDiv.appendChild(alertMessage);
+        }
+
+        // Function to display weather updates in the UI
+        function displayWeatherUpdate(message) {
+            const updatesDiv = document.getElementById('updates');
+            const updateMessage = document.createElement('p');
+            updateMessage.textContent = `Update: ${message}`;
+            updatesDiv.appendChild(updateMessage);
+        }
+
+        function initMap() {
+            const locations = [
+                { name: 'Elisa House', address: '60 Newcastle St, Toronto, ON M8Y 1A3', lat: 43.633, lng: -79.512 },
+                { name: 'Fred Victor Centre Fatima House', address: '1059 College St, Toronto, ON M6H 1B1', lat: 43.655, lng: -79.423 },
+                { name: 'Evangeline Residence', address: '2808 Dundas St W, Toronto, ON M6P 1Y5', lat: 43.657, lng: -79.482 },
+                { name: 'Bathurst-Lakeshore Shelter', address: '545 Lake Shore Blvd W, Toronto, ON M5V 1A3', lat: 43.637, lng: -79.401 },
+                { name: 'Junction Place', address: '731 Runnymede Rd, Toronto, ON M6N 3V7', lat: 43.671, lng: -79.493 },
+                { name: 'Florence Booth House', address: '723 Queen St W, Toronto, ON M6J 1E6', lat: 43.649, lng: -79.406 },
+                { name: 'Christie-Ossington Neighbourhood Centre (Lansdowne Ave)', address: '973 Lansdowne Ave, Toronto, ON M6H 3Z5', lat: 43.663, lng: -79.452 },
+                { name: 'Sistering', address: '962 Bloor St W, Toronto, ON M6H 1L6', lat: 43.661, lng: -79.426 },
+                { name: 'Christie-Ossington Neighbourhood Centre (Bloor St W)', address: '850 Bloor St W, Toronto, ON M6G 1M2', lat: 43.664,},
+                { name: 'Christie-Ossington Neighbourhood Centre (Bloor St W)', address: '850 Bloor St W, Toronto, ON M6G 1M2', lat: 43.664, lng: -79.423 }
+            ];
+
+            // Create the map centered at a default location
+            const map = new google.maps.Map(document.getElementById('map'), {
+                zoom: 12,
+                center: { lat: 43.7, lng: -79.42 }
+            });
+
+            // Add markers for each shelter location
+            locations.forEach(location => {
+                const marker = new google.maps.Marker({
+                    position: { lat: location.lat, lng: location.lng },
+                    map: map,
+                    title: location.name,
+                });
+
+                const infoWindow = new google.maps.InfoWindow({
+                    content: `<h3>${location.name}</h3><p>${location.address}</p><button class="directions-btn" data-lat="${location.lat}" data-lng="${location.lng}">Get Directions</button>`
+                });
+
+                marker.addListener('click', function() {
+                    infoWindow.open(map, marker);
+                });
+            });
+
+            // Add event listener for "Get Directions" button click
+            document.addEventListener('click', function(event) {
+                if (event.target && event.target.classList.contains('directions-btn')) {
+                    const lat = parseFloat(event.target.getAttribute('data-lat'));
+                    const lng = parseFloat(event.target.getAttribute('data-lng'));
+
+                    if (navigator.geolocation) {
+                        navigator.geolocation.getCurrentPosition(function(position) {
+                            const userLat = position.coords.latitude;
+                            const userLng = position.coords.longitude;
+
+                            const directionsUrl = `https://www.google.com/maps/dir/?api=1&origin=${userLat},${userLng}&destination=${lat},${lng}&travelmode=driving`;
+                            window.open(directionsUrl, '_blank');
+                        }, function() {
+                            alert("Unable to get your location for directions.");
+                        });
+                    } else {
+                        alert("Geolocation is not supported by your browser.");
+                    }
+                }
+            });
+        }
+
+    </script>
+
+    <!-- Google Maps API Script -->
+    <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyDs9BUcJE0SqSj7459CyAcm4KDZyOALXtw&callback=initMap" async defer></script>
+
+</body>
+</html>
